@@ -1,0 +1,318 @@
+/* --- 1. KÖK DEĞİŞKENLER (T3 RENK PALETİ) --- */
+:root {
+    
+    --bg-color: #0b1121;       /* Derin Lacivert Arka Plan */
+    --panel-bg: #151e32;       /* Lacivert Panel */
+    --text-color: #f8fafc;     /* Net okunabilirlik için Kırık Beyaz */
+
+    /* Vurgu Renkleri */
+    --t3-red: #E30613;         
+    --t3-blue: #005B9F;        /* İkincil Mavi */
+
+    /* Endüstriyel Durum Renkleri */
+    --accent-green: #10b981;   /* Başarılı (Yeşil) */
+    --accent-orange: #f59e0b;  /* Uyarı (Turuncu) */
+    --danger-red: #E30613;     /* Acil Durum */
+
+    --border-radius: 6px;      /* Daha keskin kenarlar */
+}
+
+/* --- 2. SIFIRLAMA & TEMEL AYARLAR --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, 
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+}
+
+h2, 
+h3 {
+    margin-bottom: 15px;
+    color: #ffffff;
+}
+
+/* --- 3. ANA YAPI (LAYOUT & GRID) --- */
+.dashboard-wrapper {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: 2fr 5fr 2.5fr;
+    gap: 20px;
+    height: 100%;
+}
+
+/* --- 4. PANELLER --- */
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 20px;
+    background-color: var(--panel-bg);
+    border: 1px solid rgba(255, 255, 255, 0.05); /* Şık bir sınır çizgisi */
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.panel-header { flex-shrink: 0; }
+.panel-footer { flex-shrink: 0; margin-top: auto; }
+.flex-col-footer { display: flex; flex-direction: column; gap: 10px; }
+.panel-content { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+.panel-content::-webkit-scrollbar { width: 6px; }
+.panel-content::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+/* --- 5. BİLEŞENLER --- */
+.status-card, 
+.telemetry-card {
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-left: 3px solid var(--t3-blue);
+    border-radius: 6px;
+}
+
+.status-ok {
+    font-weight: bold;
+    color: var(--accent-green);
+}
+
+/* Buton Stilleri */
+.btn {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #ffffff;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: 4px; /* Butonlar da daha köşeli */
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:active { transform: scale(0.98); }
+.btn-no-margin { margin-bottom: 0 !important; }
+
+/* T3 Kurumsal Renk Atamaları */
+.primary { background-color: var(--t3-red); } /* Ana butonlar T3 Kırmızısı */
+.primary:hover { box-shadow: 0 0 10px rgba(227, 6, 19, 0.4); }
+
+.warning { background-color: var(--accent-orange); }
+.danger  { background-color: var(--danger-red); }
+.success { background-color: var(--t3-blue); } /* Başarı/Programlama butonları T3 Mavisi */
+
+.e-stop {
+    height: 60px;
+    margin-bottom: 0;
+    font-size: 20px;
+    background-color: var(--danger-red);
+    border: 2px solid #ffcdd2;
+    box-shadow: 0 0 15px rgba(227, 6, 19, 0.4);
+    animation: estop-pulse 2s infinite;
+}
+
+@keyframes estop-pulse {
+    0% { box-shadow: 0 0 15px rgba(227, 6, 19, 0.4); }
+    50% { box-shadow: 0 0 25px rgba(227, 6, 19, 0.7); }
+    100% { box-shadow: 0 0 15px rgba(227, 6, 19, 0.4); }
+}
+
+.quick-actions {
+    flex-shrink: 0;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.task-queue { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.task-queue h3 { flex-shrink: 0; }
+
+/* --- 6. HARİTA VE KAMERA MODÜLLERİ --- */
+.map-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    margin-bottom: 15px;
+    background-color: var(--panel-bg);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+}
+
+.scale-info { font-size: 12px; font-weight: bold; color: var(--accent-orange); }
+
+.horizontal-scroll {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    background-color: #050810; /* Harita arka planı simsiyah yerine derin lacivert */
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0 0 6px 6px;
+}
+
+.stitched-map-container { position: relative; display: inline-block; height: 100%; }
+#stitched-map-img { display: block; width: auto; height: 100%; opacity: 0.85; }
+
+.map-scroll-area::-webkit-scrollbar { height: 10px; }
+.map-scroll-area::-webkit-scrollbar-thumb { background: #334155; border-radius: 5px; }
+
+.robot-dot {
+    position: absolute;
+    top: 50%; left: 0; z-index: 10;
+    width: 16px; height: 16px;
+    background-color: var(--t3-red);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--t3-red);
+    transform: translate(-50%, -50%);
+    transition: left 0.3s linear, top 0.3s linear;
+}
+
+.robot-pulse {
+    width: 100%; height: 100%;
+    background-color: var(--t3-red);
+    border-radius: 50%;
+    animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(3); opacity: 0; }
+}
+
+.camera-wrapper { flex-shrink: 0; }
+.camera-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+
+.cam-dropdown {
+    padding: 8px; color: #ffffff;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px; outline: none;
+}
+.full-width-dropdown { width: 100%; margin: 5px 0 15px 0; }
+
+.camera-feed {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    height: 100%; min-height: 250px; overflow: hidden;
+    background-color: #050810;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+}
+
+.ros-camera-img { position: absolute; top: 0; left: 0; z-index: 2; width: 100%; height: 100%; object-fit: contain; }
+.live-indicator { position: absolute; top: 10px; left: 10px; z-index: 3; font-size: 12px; font-weight: bold; color: var(--danger-red); animation: blink 1.5s infinite; }
+.feed-text { position: relative; z-index: 1; font-family: monospace; font-size: 16px; color: #64748b; text-align: center; }
+.scanline { position: absolute; top: 0; left: 0; z-index: 3; width: 100%; height: 5px; background: rgba(227, 6, 19, 0.15); animation: scan 3s linear infinite; }
+
+@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+@keyframes scan { 0% { top: -10px; } 100% { top: 100%; } }
+
+/* --- 7. MODALLAR VE AÇILIR PENCERELER --- */
+.modal { position: fixed; top: 0; left: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); }
+.modal.hidden { display: none; }
+
+.modal-content {
+    position: relative; width: 350px; padding: 20px;
+    background: var(--panel-bg);
+    border: 1px solid var(--t3-red);
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+.modal-medium { width: 450px; }
+.modal-large  { width: 800px; max-width: 90%; }
+
+.modal-title { margin-bottom: 20px; padding-bottom: 10px; color: #ffffff; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.close-btn { position: absolute; top: 10px; right: 15px; font-size: 24px; color: #888; cursor: pointer; }
+.close-btn:hover { color: var(--t3-red); }
+
+.map-action-box { margin-top: 20px; color: var(--text-color); }
+.map-action-box input { box-sizing: border-box; width: 100%; padding: 10px; margin: 5px 0 10px 0; color: #ffffff; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; }
+.cam-add-btn { width: auto; margin: 0; padding: 10px 15px; }
+.cam-list { max-height: 180px; padding: 0; overflow-y: auto; list-style: none; }
+
+/* Mesai Programlama */
+.modal-body-flex { display: flex; gap: 20px; color: #ffffff; }
+.modal-pane { flex: 1; display: flex; flex-direction: column; padding: 20px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; }
+.form-label { display: block; margin-bottom: 5px; color: #94a3b8; }
+.days-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+.select-all-label { margin-right: 5px; padding-right: 10px; color: var(--t3-blue); cursor: pointer; border-right: 1px solid rgba(255,255,255,0.1); }
+.time-input-group { margin-bottom: 20px; }
+.time-input { box-sizing: border-box; width: 100%; padding: 8px; color: #ffffff; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; }
+.sch-btn { width: 100%; margin: 0; padding: 12px; font-size: 15px; }
+
+/* Mesai Listesi */
+.sch-list-title { margin-bottom: 10px; padding-bottom: 10px; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sch-ul { flex-grow: 1; max-height: 300px; padding: 0; overflow-y: auto; list-style: none; }
+.sch-empty { margin-top: 80px; font-size: 14px; color: #64748b; text-align: center; }
+.sch-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-top: 8px; background-color: rgba(0,0,0,0.3); border-left: 4px solid var(--t3-blue); border-radius: 4px; }
+.sch-item-info { margin-bottom: 5px; font-size: 15px; }
+.sch-item-details { font-size: 13px; color: #94a3b8; }
+.sch-del-btn { padding: 6px 12px; font-weight: bold; color: #ffffff; cursor: pointer; background: var(--danger-red); border: none; border-radius: 4px; transition: 0.2s ease; }
+.sch-del-btn:hover { background: #b91c1c; }
+
+/* --- 8. YARDIMCI SINIFLAR --- */
+.mb-10 { margin-bottom: 10px; }
+.flex-row-gap10 { display: flex; gap: 10px; margin: 10px 0; }
+.flex-1 { flex: 1; }
+
+/* --- 9. YENİ: KARA KUTU LOG TERMİNALİ --- */
+.terminal-card {
+    background-color: #0c0c0c;
+    border: 1px solid #333;
+    border-radius: 6px;
+    font-family: 'Courier New', Courier, monospace;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.terminal-header {
+    background-color: #1f1f1f;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #bbb;
+    font-size: 12px;
+    border-bottom: 1px solid #333;
+}
+
+.terminal-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    /* Kaydırma çubuğu ayarı */
+    min-height: 150px; 
+}
+
+.terminal-body::-webkit-scrollbar { width: 6px; }
+.terminal-body::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+.log-row {
+    font-size: 12px;
+    line-height: 1.4;
+    word-break: break-all;
+}
+
+/* Log seviye renkleri */
+.log-row.INFO { color: #10b981; }  /* Yeşil */
+.log-row.WARN { color: #f59e0b; }  /* Sarı */
+.log-row.ERROR { color: #ef4444; font-weight: bold; } /* Kırmızı */

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmMax - Otonom Hayvancılık Robotu Kontrol Merkezi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <div class="dashboard">
+            
+            <!-- SOL PANEL -->
+            <aside class="panel left-panel">
+                <div class="panel-header">
+                    <h2>FarmMax Sistem Durumu</h2>
+                </div>
+                <div class="panel-content">
+                    <div class="status-card">
+                        <p>Bağlantı: <span id="conn-status" class="status-ok">Aktif</span></p>
+                        <p>Mod: <span id="drive-mode">Otonom Devriye</span></p>
+                        <p>Batarya: <span id="battery-level">%85</span></p>
+                    </div>
+                    <div class="telemetry-card">
+                        <h3>Anlık Konum (Tesis İçi)</h3>
+                        <select id="ui-active-robot" class="cam-dropdown" style="width:100%; margin-bottom:10px; border: 1px solid var(--t3-blue);">
+                            <option value="FarmMax - Alfa">🤖 FarmMax - Alfa</option>
+                            <option value="FarmMax - Beta">🤖 FarmMax - Beta</option>
+                        </select>
+                        <p>Bölge: <span id="aruco-location" style="color: var(--accent-orange); font-weight: bold;">ArUco Bekleniyor...</span></p>
+                        
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #444; font-size: 13px; color: #888;">
+                            Koordinat: X: <span id="pos-x">0.00</span> | Y: <span id="pos-y">0.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer flex-col-footer">
+                    <button id="btnCameraSetup" class="btn primary btn-no-margin">Tesis Kameraları</button>
+                    <!-- ROTA ÇİZİMİ BUTONU -->
+                    <button id="btnRouteDraw" class="btn warning btn-no-margin">Tesis Rotaları Çiz (Teach)</button>
+                    <button id="btnSettings" class="btn warning btn-no-margin">Tesis Harita Kalibrasyonu</button>
+                    <button id="btnSchedule" class="btn success btn-no-margin">📅 FarmMax Mesai Programla</button>
+                </div>
+            </aside>
+
+            <!-- ORTA PANEL -->
+            <main class="panel center-panel">
+                
+                <!-- YATAY SCROLL & BİRLEŞTİRİLMİŞ KAMERA GÖRÜNTÜSÜ -->
+                <div class="map-wrapper">
+                    <div class="camera-header" style="margin-bottom: 5px;">
+                        <h2>Canlı Tesis Haritası (Kuşbakışı Rota)</h2>
+                        
+                        <!-- DİNAMİK HAT SEÇİM MENÜSÜ -->
+                        <select id="hat-selector" class="cam-dropdown">
+                            <option value="" data-length="0" data-width="0">İzlenecek Ahır/Koridoru Seçin...</option>
+                            <option value="Ahır-1-AnaHat" data-length="100" data-width="5">Ahır 1 - Yemlik Yolu (100m x 5m)</option>
+                            <option value="Ahır-1-AraKoridor" data-length="40" data-width="3">Ahır 1 - Ara Koridor (40m x 3m)</option>
+                            <option value="Depo-Transfer" data-length="60" data-width="4">Silo Transfer Hattı (60m x 4m)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="camera-header" style="justify-content: flex-end; padding-top: 0;">
+                        <span class="scale-info" id="map-scale-info">Hat Seçimi Bekleniyor...</span>
+                    </div>
+
+                    <div class="map-scroll-area horizontal-scroll" id="map-scroll">
+                        <div class="stitched-map-container" id="stitched-map-container">
+                            <img id="stitched-map-img" src="" alt="Tesis Kameraları Birleştiriliyor..." style="display: none;">
+                            <!-- Çizilen Rota Noktaları buraya JavaScript ile eklenecek -->
+                            <svg id="route-svg" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:4;"></svg>
+                            <!-- ALFA ROBOTU -->
+                            <div id="robot-marker-alfa" class="robot-dot" style="display: none; background-color: #E30613; box-shadow: 0 0 12px #E30613;">
+                                <div class="robot-pulse" style="background-color: #E30613;"></div>
+                            </div>
+                            
+                            <!-- BETA ROBOTU -->
+                            <div id="robot-marker-beta" class="robot-dot" style="display: none; background-color: #005B9F; box-shadow: 0 0 12px #005B9F;">
+                                <div class="robot-pulse" style="background-color: #005B9F;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANLIK KAMERA (Lokal) -->
+                <div class="camera-wrapper">
+                    <div class="camera-header">
+                        <h2>FarmMax FP-Kamera (Göz Hizası - ArUco Tarama)</h2>
+                    </div>
+                    <div class="camera-feed" id="video-container">
+                        <span class="live-indicator">CANLI</span>
+                        <span id="cam-feed-text" class="feed-text">Sistem Hazır. Haritadan ahır seçtiğinizde anlık görüntü buraya yansıyacaktır.</span>
+                        <img id="kameraEkrani" src="" alt="IP Kamera" class="ros-camera-img" style="display: none;" onerror="kameraHatasi()">
+                        <div class="scanline"></div> 
+                    </div>
+                </div>
+            </main>
+
+            <!-- SAĞ PANEL -->
+            <aside class="panel right-panel">
+                <div class="panel-header">
+                    <h2>Görev Yöneticisi</h2>
+                </div>
+                <div class="panel-content">
+                    
+                    <!-- DOSYA DİZİNİ ŞEKLİNDE MESAİ YOĞUNLUĞU -->
+                    <div class="density-board" style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;">
+                        <h3 style="color: #4caf50; font-size: 14px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+                            📂 Tesis Dosya Dizini: Aktif Mesailer
+                        </h3>
+                        <div id="sch-list-main" style="max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 13px; color: #fff;">
+                            <div style="color:#888; text-align:center; padding:10px;">Veriler bekleniyor...</div>
+                        </div>
+                    </div>
+
+                    <div class="quick-actions">
+                        <button id="btn-rth" class="btn warning" style="width: 100%; margin: 0;">⚡ Seçili Robotu Şarja Döndür (RTH)</button>
+                    </div>
+                    
+                    <!-- KARA KUTU CANLI LOG TERMİNALİ -->
+                    <div class="task-queue">
+                        <div class="terminal-card">
+                            <div class="terminal-header">
+                                <span>📟 Kara Kutu - Log Terminali</span>
+                                <div>
+                                    <button id="fetch-logs-btn" onclick="fetchGecmisLogs()" style="background: transparent; border: 1px solid var(--t3-blue); color: var(--t3-blue); border-radius: 3px; cursor: pointer; padding: 2px 8px; font-size: 11px; margin-right: 5px;">Geçmiş (DB)</button>
+                                    <button id="clear-logs-btn" onclick="clearLogs()" style="background: transparent; border: 1px solid #555; color: #aaa; border-radius: 3px; cursor: pointer; padding: 2px 8px; font-size: 11px;">Temizle</button>
+                                </div>
+                            </div>
+                            <div id="log-container" class="terminal-body">
+                                <!-- Log satırları buraya akacak -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <button id="btn-estop" class="btn danger e-stop">FARM-MAX ACİL STOP</button>
+                    <button id="btn-estop-clear" class="btn warning btn-no-margin" style="margin-top: 8px;">🔓 Acil Stopu Kaldır</button>
+                </div>
+            </aside>
+
+        </div>
+    </div>
+
+    <!-- 1. GİZLİ MODAL (ROTA ÇİZİM VE ÖĞRETME - TEACH) -->
+    <div id="routeDrawModal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <span id="closeRouteDraw" class="close-btn">&times;</span>
+            <h2 class="modal-title">📍 FarmMax'e Rota Öğret (Teach)</h2>
+            <div style="display: flex; gap: 20px;">
+                <div style="flex: 2;">
+                    <p style="color:#94a3b8; font-size:13px; margin-bottom:10px;">Aşağıdaki haritaya sol tıklayarak FarmMax'in izleyeceği rotayı çizin. Noktalar sırasıyla birleştirilecektir.</p>
+                    
+                    <!-- ÇÖZÜM 1: CANLI KAMERA YAYININI MODAL İÇİNE ALAN YAPI -->
+                    <div id="draw-canvas-container" style="position:relative; background:#111; border: 1px solid #333; height: 350px; width: 100%; overflow:hidden; cursor:crosshair;">
+                        <!-- Aktif Panorama Buraya Yansıyacak -->
+                        <img id="draw-live-map" src="" style="position:absolute; top:0; left:0; width:100%; height:100%; display: none;">
+                        
+                        <div id="draw-placeholder-text" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#555;">Canlı Harita Seçimi Bekleniyor...</div>
+                        <svg id="draw-svg" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1;"></svg>
+                    </div>
+
+                </div>
+                <div style="flex: 1; display:flex; flex-direction:column; gap: 10px;">
+                    <label class="form-label">Rota Adı:</label>
+                    <input type="text" id="draw-route-name" placeholder="Örn: Ahır-1 Yem Dağıtımı" class="time-input">
+                    
+                    <label class="form-label">Bağlı Olduğu Tesis Alanı:</label>
+                    <select id="draw-route-map" class="cam-dropdown">
+                        <option value="Ahır-1">Ahır-1</option>
+                        <option value="Ahır-2">Ahır-2</option>
+                        <option value="Silo">Silo/Depo</option>
+                    </select>
+
+                    <p id="draw-points-count" style="color:var(--accent-green); font-size:12px; font-weight:bold; margin-top:10px;">0 Nokta Çizildi</p>
+                    
+                    <button onclick="clearDrawnRoute()" class="btn warning" style="margin-top:auto;">🗑️ Çizimi Temizle</button>
+                    <button onclick="saveDrawnRoute()" class="btn success">💾 Rotayı Veritabanına Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. GİZLİ MODAL (PANORAMA KALİBRASYONU VE İSİMLİ HARİTA KUTUSU) -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content modal-medium">
+            <span id="closeSettings" class="close-btn">&times;</span>
+            <h3 class="modal-title">Tesis Görüntü ve Panorama Kalibrasyonu</h3>
+            
+            <div class="map-action-box">
+                <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">
+                    Kameraların açısı büyükbaş hayvan teması vb. bir fiziksel müdahale sonucu bozulduysa, yeni açıları eşleştirmek için sistemi yeniden hizalayın.
+                </p>
+                <button id="btnHizala" class="btn primary" onclick="alert('Stitching Algoritması Yeniden Başlatıldı.')">🔄 Kameraları Yeniden Hizala</button>
+            </div>
+            
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+            
+            <div class="map-action-box" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                <h4 style="color: var(--t3-blue, #005B9F); margin-bottom: 10px;">🗺️ Bağımsız Tesis Haritası Yönetimi</h4>
+                <p style="font-size: 13px; color: #94a3b8; margin-bottom: 10px;">
+                    Tesis krokisine özel bir isim vererek veritabanına kaydedin ve dilediğiniz zaman yönetin.
+                </p>
+                
+                <label class="form-label">Tesis / Ahır Adı:</label>
+                <input type="text" id="customMapName" placeholder="Örn: Bursa Ahır Blok A" class="time-input" style="margin-bottom: 10px;">
+                
+                <div class="flex-row-gap10">
+                    <input type="file" id="mapUploadInput" accept="image/png, image/jpeg" style="display: none;">
+                    <button id="btnMapUploadTrigger" class="btn success flex-1" style="margin: 0;">📁 Kroki Seç</button>
+                    <button id="btnMapUploadConfirm" class="btn primary" style="width: auto; margin: 0;">💾 DB'ye Kaydet</button>
+                    <button id="btnMapRemove" class="btn danger" style="width: auto; margin: 0;" title="Haritayı Sil">🗑️ Sil</button>
+                </div>
+                <p id="map-upload-status" style="font-size: 12px; color: var(--accent-green); display: none; margin-top: 10px;">
+                    ✅ Tesis haritası veritabanına başarıyla kaydedildi!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. GİZLİ MODAL (KAMERA KURULUMU) -->
+    <div id="cameraModal" class="modal hidden">
+        <div class="modal-content modal-medium">
+            <span id="closeCameraModal" class="close-btn">&times;</span>
+            <h3 class="modal-title">📷 Tesis IP Kamera Kurulumu</h3>
+            <div class="map-action-box">
+                <p>Yeni Tesis Kamerası Ekle :</p>
+                <div class="flex-row-gap10">
+                    <select id="ahirSecim" class="cam-dropdown">
+                        <option value="Ahır-1">Ahır-1</option>
+                        <option value="Ahır-2">Ahır-2</option>
+                        <option value="Silo">Silo/Depo</option>
+                    </select>
+                    <input type="text" id="ipInput" placeholder="IP: 192.168.1.50 (veya 0)" class="flex-1 time-input">
+                    <button onclick="kameraEkle()" class="btn primary cam-add-btn">Ekle</button>
+                </div>
+            </div>
+            <div class="map-action-box">
+                <p class="mb-10">Gruplanmış Kameralar (Stitcher Engine):</p>
+                <ul id="kameraListesi" class="cam-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. GİZLİ MODAL (MESAİ PROGRAMLAMA) -->
+    <div id="scheduleModal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <span id="closeScheduleModal" class="close-btn">&times;</span>
+            <h2 class="modal-title">📅 FarmMax Mesai ve Görev Programlama</h2>
+            <div class="modal-body-flex">
+                <div class="modal-pane">
+                    <label class="form-label">Robot Seçimi:</label>
+                    <select id="sch-robot" class="cam-dropdown full-width-dropdown">
+                        <option value="FarmMax - Alfa">FarmMax - Alfa</option>
+                        <option value="FarmMax - Beta">FarmMax - Beta</option>
+                    </select>
+                    
+                    <label class="form-label">Uygulanacak Otonom Rota (DB'den):</label>
+                    <select id="sch-route" class="cam-dropdown full-width-dropdown">
+                        <option value="">Önce bir rota çizin ve kaydedin...</option>
+                    </select>
+                    
+                    <label class="form-label">Çalışma Günleri:</label>
+                    <div class="days-group">
+                        <label class="select-all-label"><input type="checkbox" id="sch-all-days"> <b>Hepsini Seç</b></label>
+                        <label><input type="checkbox" value="Pzt" class="sch-day"> Pzt</label>
+                        <label><input type="checkbox" value="Sal" class="sch-day"> Sal</label>
+                        <label><input type="checkbox" value="Çar" class="sch-day"> Çar</label>
+                        <label><input type="checkbox" value="Per" class="sch-day"> Per</label>
+                        <label><input type="checkbox" value="Cum" class="sch-day"> Cum</label>
+                        <label><input type="checkbox" value="Cmt" class="sch-day"> Cmt</label>
+                        <label><input type="checkbox" value="Paz" class="sch-day"> Paz</label>
+                    </div>
+                    <div class="time-input-group">
+                        <label class="form-label">Başlama Saati:</label>
+                        <input type="time" id="sch-start" class="time-input">
+                    </div>
+                    <div class="time-input-group">
+                        <label class="form-label">Tahmini Süre (Dakika):</label>
+                        <input type="number" id="sch-duration" class="time-input" placeholder="Örn: 45" min="5" value="30">
+                    </div>
+                    <button onclick="mesaiProgramla()" class="btn success sch-btn">⏰ FarmMax Mesaisini Kaydet</button>
+                </div>
+                <div class="modal-pane">
+                    <h3 class="sch-list-title">Aktif FarmMax Programları (DB)</h3>
+                    <ul id="sch-list" class="sch-ul"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
